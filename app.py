@@ -126,7 +126,7 @@ def document_query_tool(question: str) -> str:
 
 @tool
 def document_comparison_tool(question: str) -> str:
-    """Compares the two uploaded documents, identifies matched elements, exports them as JSON, formats into CSV, and provides a download link."""
+    """Compares documents, identifies matched elements, exports them as JSON, formats into CSV, and provides a download link."""
 
     # Retrieve the vector database retriever
     retriever = cl.user_session.get("qdrant_retriever")

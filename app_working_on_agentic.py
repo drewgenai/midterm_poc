@@ -154,10 +154,7 @@ def document_comparison_tool(question: str) -> str:
         df = pd.DataFrame(structured_data, columns=["Derived Description", "Protocol_1", "Protocol_2"])
         df.to_csv(file_path, index=False)
 
-        # Store the file path in the user session for later retrieval
-        cl.user_session.set("comparison_file_path", file_path)
-        
-        return "Comparison complete! CSV file has been generated."
+        return file_path  # Return path to the CSV file
 
     except json.JSONDecodeError:
         return "Error: Response is not valid JSON."
@@ -262,43 +259,22 @@ async def handle_message(message: cl.Message):
         )
     
     # Handle the response based on the tool that was called
-    output = response["output"]
-    
-    if isinstance(output, dict) and "answer" in output:
+    if isinstance(response["output"], dict) and "answer" in response["output"]:
         # This is from document_query_tool
-        await cl.Message(output["answer"]).send()
-        
-    elif "Comparison complete!" in str(output):
-        # This is from document_comparison_tool
-        file_path = cl.user_session.get("comparison_file_path")
-        
-        if file_path and os.path.exists(file_path):
-            # Read the file content
-            with open(file_path, "rb") as f:
-                file_content = f.read()
-            
-            # Create a File element with the content
-            file_element = cl.File(
-                name="comparison_results.csv",
-                content=file_content,
-                display="inline"
-            )
-            
-            # Send the message with the file element
-            await cl.Message(
-                content="Comparison complete! Download the CSV below:",
-                elements=[file_element],
-            ).send()
-        else:
-            await cl.Message(content=str(output)).send()
-        
+        await cl.Message(response["output"]["answer"]).send()
+    elif isinstance(response["output"], str) and response["output"].endswith(".csv"):
+        # This is from document_comparison_tool with a CSV file
+        await cl.Message(
+            content="Comparison complete! Download the CSV below:",
+            elements=[cl.File(name="comparison_results.csv", path=response["output"], display="inline")],
+        ).send()
     else:
         # Generic response
-        await cl.Message(content=str(output)).send()
+        await cl.Message(content=str(response["output"])).send()
     
     # Update chat history with the new exchange
     chat_history.extend([
         HumanMessage(content=message.content),
-        HumanMessage(content=str(output))
+        HumanMessage(content=str(response["output"]))
     ])
     cl.user_session.set("chat_history", chat_history)

@@ -93,6 +93,10 @@ At present, our application focuses on **structured comparisons** between protoc
 While the current system is **not agentic**, we may explore **agent-based reasoning** in future versions to dynamically adjust retrieval and processing strategies based on protocol complexity.  At this time all the information we need is in the provided local documents.
 
 
+### Agentic reasoning POC
+There is a separate poc in the app_working_on_agentic.py file.  That utilizes the agentic approach. 
+It has an agent executor that utilizes agentic reasoning in this application by leveraging OpenAI's function calling to dynamically choose and execute the most appropriate tool based on the user's input. The agent is guided by a predefined system prompt that outlines when to use each tool, allowing it to interpret the user's intent and invoke either the document_query_tool for retrieving document content or the document_comparison_tool for comparing documents. This process enables the AI to act autonomously, selecting and executing the correct function without needing explicit conditional logic.
+
 
 ## Task 4: Building a Quick End-to-End Prototype
 
@@ -160,10 +164,12 @@ The base model is the best performing model for the current use case.
 
 In the second half of the course I would like to explore having the application look for external standards to compare the protocols to further help with the comparison process.  I would also like it to evaluate the file type and use reasoning to determine the best approach to extracting the information and potentially accept more than 2 files.
 
-There is a partially working agentic version of the application in app_working_on_agentic.py.  It has issues with the download links provided but works well with the agentic approach. Unfortunately the download link it provies is not workign even though the file get created properly.
+There is a partially working agentic version of the application in app_working_on_agentic.py.  It has issues with the download links provided but works well with the agentic approach. Unfortunately the download link it provides is not working even though the file gets created properly. (https://github.com/drewgenai/midterm_poc/blob/main/app_working_on_agentic.py)  
 
 ## Final Submission
 
-1. GitHub: https://github.com/drewgenai/midterm_poc/blob/main/app.py
-2. Public App link: https://huggingface.co/spaces/drewgenai/midterm_poc
-3. Public Fine-tuned embeddings: https://huggingface.co/drewgenai/midterm-compare-arctic-embed-m-ft
+1. GitHub: https://github.com/drewgenai/midterm_poc/blob/main/app.py  
+2. GitHub: agentic poc https://github.com/drewgenai/midterm_poc/blob/main/app_working_on_agentic.py  
+2. Public App link: https://huggingface.co/spaces/drewgenai/midterm_poc  
+3. Public Fine-tuned embeddings: https://huggingface.co/drewgenai/midterm-compare-arctic-embed-m-ft  
+4. loom link: https://www.loom.com/share/084d6c165917486097bcaea7deb12e88?sid=a5cc196f-76f1-4e18-bb92-ee61018f0b7e  

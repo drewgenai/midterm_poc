@@ -1,22 +1,17 @@
-
-Link to fine tuning and testing
-https://github.com/drewgenai/midterm_poc/blob/main/03-testembedtune.ipynb
-
-
-
-## Background and Context
-
-
 ## Task 1: Defining your Problem and Audience
 
 
 ## Task 2: Propose a Solution
 
 
+
 ## Task 3: Dealing with the Data
 
 
+
 ## Task 4: Building a Quick End-to-End Prototype
+
+https://huggingface.co/spaces/drewgenai/midterm_poc
 
 
 ## Task 5: Creating a Golden Test Data Set
@@ -47,13 +42,11 @@ Finetuned model {'context_recall': 1.0000, 'faithfulness': 0.8500, 'factual_corr
 
 Openai model {'context_recall': 1.0000, 'faithfulness': 1.0000, 'factual_correctness': 0.7540, 'answer_relevancy': 0.9463, 'context_entity_recall': 0.8095, 'noise_sensitivity_relevant': 0.3095}
 
-
+With the results as they are using the Snowflake/snowflake-arctic-embed-m model makes sense for this use case.
 
 
 ## Final Submission
 
 1. GitHub: https://github.com/drewgenai/midterm_poc/blob/main/app.py
-a. Video: {link}
-b. Report: https://github.com/drewgenai/midterm_poc/blob/main/READMEresponses.md
 2. Public App link: https://huggingface.co/spaces/drewgenai/midterm_poc
 3. Public Fine-tuned embeddings: https://huggingface.co/drewgenai/midterm-compare-arctic-embed-m-ft

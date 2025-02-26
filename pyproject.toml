@@ -51,7 +51,7 @@ dependencies = [
     #"ragas==0.2.10"
     #"FAISS"
     #remove only used for testing
-    "cohere",
-    "langchain_cohere",
-    "arxiv"
+    #"cohere",
+    #"langchain_cohere",
+    #"arxiv"
 ]

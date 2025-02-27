@@ -28,18 +28,19 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 model_id = "Snowflake/snowflake-arctic-embed-m"
 embedding_model = HuggingFaceEmbeddings(model_name=model_id)
-semantic_splitter = SemanticChunker(embedding_model)
+semantic_splitter = SemanticChunker(embedding_model, add_start_index=True, buffer_size=30)
 llm = ChatOpenAI(model="gpt-4o-mini")
 
 
-# comparison prompt
-export_prompt = """
-CONTEXT:
+# Export comparison prompt
+export_prompt = export_prompt = """
 CONTEXT:
 {context}
 
 QUERY:
 {question}
+
+You are a helpful assistant. Use the available context to answer the question.
 
 Between these two files containing protocols, identify and match **entire assessment sections** based on conceptual similarity. Do NOT match individual questions.
 
@@ -103,18 +104,21 @@ def document_query_tool(question: str) -> str:
 
     retriever = cl.user_session.get("qdrant_retriever")
     if not retriever:
-        return "Error: No documents available for retrieval. Please upload documents first."
+        return "Error: No documents available for retrieval. Please upload two PDF files first."
+    retriever = retriever.with_config({"k": 10})
 
-    # Retrieve context from the vector database
+    # Use a RAG chain similar to the comparison tool
+    rag_chain = (
+        {"context": itemgetter("question") | retriever, "question": itemgetter("question")}
+        | query_prompt | llm | StrOutputParser()
+    )
+    response_text = rag_chain.invoke({"question": question})
+
+    # Get the retrieved docs for context
     retrieved_docs = retriever.invoke(question)
-    docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
-
-    # Generate response using the natural query prompt
-    messages = query_prompt.format_messages(question=question, context=docs_content)
-    response = llm.invoke(messages)
 
     return {
-        "messages": [HumanMessage(content=response.content)],
+        "messages": [HumanMessage(content=response_text)],
         "context": retrieved_docs
     }
 
@@ -126,6 +130,7 @@ def document_comparison_tool(question: str) -> str:
     retriever = cl.user_session.get("qdrant_retriever")
     if not retriever:
         return "Error: No documents available for retrieval. Please upload two PDF files first."
+    retriever = retriever.with_config({"k": 10})
 
     # Process query using RAG
     rag_chain = (
@@ -177,6 +182,7 @@ async def process_files(files: list[cl.File]):
         )
         return qdrant_vectorstore.as_retriever()
     return None
+
 
 @cl.on_chat_start
 async def start():

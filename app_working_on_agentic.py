@@ -31,14 +31,10 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 # Initialize embeddings model
 model_id = "Snowflake/snowflake-arctic-embed-m"
 embedding_model = HuggingFaceEmbeddings(model_name=model_id)
-
-# Define semantic chunker
-semantic_splitter = SemanticChunker(embedding_model)
-
-# Initialize LLM
+semantic_splitter = SemanticChunker(embedding_model, add_start_index=True, buffer_size=30)
 llm = ChatOpenAI(model="gpt-4o-mini")
 
-# Define RAG prompt
+# Export comparison prompt
 export_prompt = """
 CONTEXT:
 {context}
@@ -108,18 +104,21 @@ def document_query_tool(question: str) -> str:
 
     retriever = cl.user_session.get("qdrant_retriever")
     if not retriever:
-        return "Error: No documents available for retrieval. Please upload documents first."
+        return "Error: No documents available for retrieval. Please upload two PDF files first."
+    retriever = retriever.with_config({"k": 10})
 
-    # Retrieve context from the vector database
+    # Use a RAG chain similar to the comparison tool
+    rag_chain = (
+        {"context": itemgetter("question") | retriever, "question": itemgetter("question")}
+        | query_prompt | llm | StrOutputParser()
+    )
+    response_text = rag_chain.invoke({"question": question})
+
+    # Get the retrieved docs for context
     retrieved_docs = retriever.invoke(question)
-    docs_content = "\n\n".join(doc.page_content for doc in retrieved_docs)
-
-    # Generate response using the natural query prompt
-    messages = query_prompt.format_messages(question=question, context=docs_content)
-    response = llm.invoke(messages)
 
     return {
-        "answer": response.content,
+        "messages": [HumanMessage(content=response_text)],
         "context": retrieved_docs
     }
 
@@ -153,7 +152,16 @@ def document_comparison_tool(question: str) -> str:
         df = pd.DataFrame(structured_data, columns=["Derived Description", "Protocol_1", "Protocol_2"])
         df.to_csv(file_path, index=False)
 
-        return file_path  # Return path to the CSV file
+        # Send the message with the file directly from the tool
+        cl.run_sync(
+            cl.Message(
+                content="Comparison complete! Download the CSV below:",
+                elements=[cl.File(name="comparison_results.csv", path=file_path, display="inline")],
+            ).send()
+        )
+        
+        # Return a simple confirmation message
+        return "Comparison results have been generated and displayed."
 
     except json.JSONDecodeError:
         return "Error: Response is not valid JSON."
@@ -258,17 +266,11 @@ async def handle_message(message: cl.Message):
         )
     
     # Handle the response based on the tool that was called
-    if isinstance(response["output"], dict) and "answer" in response["output"]:
+    if isinstance(response["output"], dict) and "messages" in response["output"]:
         # This is from document_query_tool
-        await cl.Message(response["output"]["answer"]).send()
-    elif isinstance(response["output"], str) and response["output"].endswith(".csv"):
-        # This is from document_comparison_tool with a CSV file
-        await cl.Message(
-            content="Comparison complete! Download the CSV below:",
-            elements=[cl.File(name="comparison_results.csv", path=response["output"], display="inline")],
-        ).send()
+        await cl.Message(response["output"]["messages"][0].content).send()
     else:
-        # Generic response
+        # Generic response (including the confirmation from document_comparison_tool)
         await cl.Message(content=str(response["output"])).send()
     
     # Update chat history with the new exchange

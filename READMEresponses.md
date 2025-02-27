@@ -165,6 +165,7 @@ The base model is the best performing model for the current use case.
 In the second half of the course I would like to explore having the application look for external standards to compare the protocols to further help with the comparison process.  I would also like it to evaluate the file type and use reasoning to determine the best approach to extracting the information and potentially accept more than 2 files.
 
 There is a partially working agentic version of the application in app_working_on_agentic.py.  It has issues with the download links provided but works well with the agentic approach. Unfortunately the download link it provides is not working even though the file gets created properly. (https://github.com/drewgenai/midterm_poc/blob/main/app_working_on_agentic.py)  
+* update note: the agentic version is now working as intended.  The download link is working and the file is created properly.
 
 ## Final Submission
 

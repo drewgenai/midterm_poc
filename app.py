@@ -8,11 +8,10 @@ from langchain_core.documents import Document
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_community.vectorstores import Qdrant
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langgraph.graph import START, StateGraph
 from langchain.tools import tool
 from langchain.schema import HumanMessage
 from typing_extensions import List, TypedDict
@@ -27,25 +26,20 @@ OUTPUT_PATH = "output/"
 os.makedirs(UPLOAD_PATH, exist_ok=True)
 os.makedirs(OUTPUT_PATH, exist_ok=True)
 
-# Initialize embeddings model
 model_id = "Snowflake/snowflake-arctic-embed-m"
 embedding_model = HuggingFaceEmbeddings(model_name=model_id)
-
-# Define semantic chunker
 semantic_splitter = SemanticChunker(embedding_model)
-
-# Initialize LLM
 llm = ChatOpenAI(model="gpt-4o-mini")
 
-# Define RAG prompt
+
+# comparison prompt
 export_prompt = """
+CONTEXT:
 CONTEXT:
 {context}
 
 QUERY:
 {question}
-
-You are a helpful assistant. Use the available context to answer the question.
 
 Between these two files containing protocols, identify and match **entire assessment sections** based on conceptual similarity. Do NOT match individual questions.
 
@@ -101,6 +95,8 @@ Provide a natural-language response using the given information. If you do not k
 query_prompt = ChatPromptTemplate.from_template(QUERY_PROMPT)
 
 
+## tool configurations
+
 @tool
 def document_query_tool(question: str) -> str:
     """Retrieves relevant document sections and answers questions based on the uploaded documents."""
@@ -121,8 +117,6 @@ def document_query_tool(question: str) -> str:
         "messages": [HumanMessage(content=response.content)],
         "context": retrieved_docs
     }
-
-
 
 @tool
 def document_comparison_tool(question: str) -> str:
@@ -157,12 +151,6 @@ def document_comparison_tool(question: str) -> str:
 
     except json.JSONDecodeError:
         return "Error: Response is not valid JSON."
-
-
-
-tool_belt = [document_query_tool, document_comparison_tool]
-model = ChatOpenAI(model="gpt-4o", temperature=0)
-model = model.bind_tools(tool_belt)
 
 async def process_files(files: list[cl.File]):
     documents_with_metadata = []

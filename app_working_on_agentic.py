@@ -8,11 +8,10 @@ from langchain_core.documents import Document
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_community.vectorstores import Qdrant
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langgraph.graph import START, StateGraph
 from langchain.tools import tool
 from langchain.schema import HumanMessage
 from typing_extensions import List, TypedDict
